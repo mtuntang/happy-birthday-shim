@@ -1,0 +1,504 @@
+/* ==========================================================================
+   Happy Birthday — cute pastel pixel pup party
+   Plain CSS, no frameworks. Palette mirrors PALETTE in js/sprites.js.
+   ========================================================================== */
+
+:root {
+  --ink:      #4b3b57; /* soft plum outlines (never black) */
+  --mauve:    #a27fae;
+  --salmon:   #f4978e;
+  --peach:    #ffc09a;
+  --butter:   #ffeaa0;
+  --pistachio:#d2f7b8;
+  --mint:     #a5e3a9;
+  --periwinkle:#b9c6ff;
+  --cornflower:#8fa8f5;
+  --baby:     #ade0ff;
+  --ice:      #dcfbff;
+  --cream:    #fffaf2;
+  --lavender: #cdbdf0;
+  --lilac:    #c0a9d6;
+  --bubblegum:#ffc4dd;
+  --rose:     #f290b8;
+
+  --font-pixel: "Press Start 2P", ui-monospace, monospace;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+[hidden] { display: none !important; }
+
+/* pastel gingham with a tiny pixel-heart pattern */
+body {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background-color: var(--bubblegum);
+  background-image:
+    linear-gradient(90deg, rgba(255, 250, 242, 0.45) 50%, transparent 50%),
+    linear-gradient(rgba(255, 250, 242, 0.45) 50%, transparent 50%);
+  background-size: 24px 24px;
+  font-family: var(--font-pixel);
+  color: var(--ink);
+  -webkit-font-smoothing: none;
+}
+
+.scene {
+  height: 100vh;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(8px, 1.8vh, 18px);
+  padding: clamp(10px, 2.5vh, 24px) clamp(8px, 3vw, 28px);
+  text-align: center;
+}
+
+.header { flex: none; }
+
+.greeting {
+  font-size: clamp(16px, 4.2vw, 40px);
+  line-height: 1.4;
+  color: var(--cream);
+  /* stacked hard shadows = chunky pixel outline + drop */
+  text-shadow:
+    -3px 0 0 var(--ink), 3px 0 0 var(--ink), 0 -3px 0 var(--ink), 0 3px 0 var(--ink),
+    6px 6px 0 var(--rose);
+  word-break: break-word;
+}
+
+.subtitle {
+  margin-top: 8px;
+  font-size: clamp(8px, 1.4vw, 12px);
+  color: var(--ink);
+}
+
+/* canvas frame: the JS sizes the canvas to an integer multiple inside it */
+.stage-frame {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+#stage {
+  display: block;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  touch-action: manipulation;
+  cursor: pointer;
+  background: var(--baby);
+  box-shadow:
+    0 0 0 4px var(--ink),
+    0 0 0 8px var(--cream),
+    0 0 0 12px var(--ink),
+    10px 10px 0 12px rgba(75, 59, 87, 0.25);
+  margin: 14px;
+}
+#stage:focus-visible { outline: 3px dashed var(--cornflower); outline-offset: 16px; }
+
+/* ---------------------------------------------------------------- buttons */
+.toolbar {
+  flex: none;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  max-width: 980px;
+}
+
+.btn {
+  font: 9px/1.2 var(--font-pixel);
+  color: var(--ink);
+  background: var(--cream);
+  border: 0;
+  padding: 9px 11px;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+  /* pixel border with notched corners + bevel */
+  box-shadow:
+    0 -3px 0 0 var(--ink), 0 3px 0 0 var(--ink),
+    -3px 0 0 0 var(--ink), 3px 0 0 0 var(--ink),
+    inset -3px -3px 0 0 var(--lavender),
+    inset 3px 3px 0 0 #fff;
+  transition: transform 80ms steps(2);
+}
+.btn:hover { background: var(--ice); }
+.btn:active { transform: translateY(2px); }
+.btn:focus-visible { outline: 3px dashed var(--cornflower); outline-offset: 5px; }
+.btn[aria-pressed="true"] { background: var(--pistachio); }
+.btn-pink { background: var(--bubblegum); }
+.btn-pink:hover { background: #ffd6e8; }
+.btn-gold { background: var(--butter); }
+.btn-big { font-size: clamp(11px, 2.4vw, 16px); padding: 14px 18px; }
+
+.hint {
+  flex: none;
+  min-height: 1.6em;
+  font-size: clamp(7px, 1.2vw, 10px);
+  color: var(--ink);
+  opacity: 0.85;
+  transition: opacity 200ms;
+}
+.hint.swap { opacity: 0; }
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap;
+}
+
+/* ------------------------------------------------------------- date lock */
+.lock {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  padding: 16px;
+  text-align: center;
+  background: repeating-linear-gradient(-45deg, var(--lavender) 0 14px, var(--lilac) 14px 28px);
+  transition: opacity 500ms steps(5);
+}
+.lock.is-open { opacity: 0; pointer-events: none; }
+.lock, .lock input { text-transform: uppercase; }
+
+/* key box password popup */
+.keybox {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(75, 59, 87, 0.45);
+}
+.keybox-card {
+  width: min(92vw, 420px);
+  display: grid;
+  gap: 12px;
+  padding: 22px;
+  background: var(--cream);
+  font-size: 10px;
+  line-height: 1.8;
+  box-shadow: 0 0 0 4px var(--ink), 0 0 0 8px var(--peach), 0 0 0 12px var(--ink), 10px 10px 0 12px rgba(75, 59, 87, 0.3);
+}
+.keybox-card h3 { font-size: 14px; color: var(--salmon); }
+.keybox-hint { color: var(--mauve); }
+.keybox-input {
+  font: 14px/1.6 var(--font-pixel);
+  letter-spacing: 2px;
+  color: var(--ink);
+  background: #fff;
+  border: 3px solid var(--ink);
+  padding: 8px;
+  width: 100%;
+}
+.keybox-input:focus { outline: 3px solid var(--bubblegum); }
+.keybox-err { min-height: 1.8em; color: var(--rose); }
+.keybox-card.wrong { animation: kb-shake 360ms steps(6); }
+@keyframes kb-shake { 20% { transform: translateX(-8px); } 40% { transform: translateX(8px); } 60% { transform: translateX(-6px); } 80% { transform: translateX(4px); } }
+.lock-title {
+  font-size: clamp(16px, 4vw, 32px);
+  line-height: 1.4;
+  color: var(--bubblegum);
+  text-shadow:
+    -3px 0 0 var(--ink), 3px 0 0 var(--ink), 0 -3px 0 var(--ink), 0 3px 0 var(--ink),
+    5px 5px 0 var(--mauve);
+}
+#lock-canvas {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  cursor: pointer;
+  box-shadow: 0 0 0 4px var(--ink), 0 0 0 8px var(--cream), 0 0 0 12px var(--ink);
+}
+#lock-canvas { margin: 12px; } /* room for the box-shadow frame so it never overlaps the text */
+#lock-canvas:focus-visible { outline: 3px dashed var(--butter); outline-offset: 16px; }
+.lock-msg {
+  font-size: clamp(9px, 1.8vw, 13px);
+  line-height: 1.8;
+  max-width: 34em;
+  padding: 10px 14px;
+  background: var(--cream);
+  box-shadow: 0 0 0 3px var(--ink);
+}
+.lock-msg b { color: var(--rose); }
+.lock-msg.pulse { animation: lock-pulse 400ms steps(4); }
+@keyframes lock-pulse { 30% { transform: scale(1.08); background: var(--butter); } }
+.lock-count { font-size: clamp(8px, 1.5vw, 11px); color: var(--cream); text-shadow: 2px 2px 0 var(--ink); }
+
+/* ----------------------------------------------------------- title screen */
+.start {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background:
+    repeating-linear-gradient(0deg, var(--baby) 0 8px, var(--ice) 8px 16px);
+  transition: opacity 350ms steps(4);
+}
+.start.is-hidden { opacity: 0; pointer-events: none; }
+.start[hidden] { display: none; }
+.start-card {
+  background: var(--cream);
+  padding: clamp(20px, 5vw, 40px);
+  max-width: 460px;
+  box-shadow:
+    0 0 0 4px var(--ink), 0 0 0 8px var(--bubblegum), 0 0 0 12px var(--ink),
+    12px 12px 0 12px rgba(75, 59, 87, 0.25);
+  display: grid;
+  gap: 18px;
+  justify-items: center;
+}
+.start-paw { color: var(--rose); font-size: 14px; animation: bob 1s steps(2) infinite; }
+.start-title {
+  font-size: clamp(22px, 6vw, 40px);
+  line-height: 1.35;
+  color: var(--butter);
+  text-shadow:
+    -3px 0 0 var(--ink), 3px 0 0 var(--ink), 0 -3px 0 var(--ink), 0 3px 0 var(--ink),
+    5px 5px 0 var(--salmon);
+}
+.start-name { font-size: 11px; color: var(--mauve); }
+.start-note { font-size: 8px; color: var(--mauve); }
+#btn-start { animation: blink 1.2s steps(1) infinite; }
+
+@keyframes bob { 50% { transform: translateY(-4px); } }
+@keyframes blink { 50% { background: var(--bubblegum); } }
+
+/* ---------------------------------------------------------------- dialogs */
+.dialog {
+  margin: auto;
+  border: 0;
+  padding: 24px;
+  width: min(92vw, 460px);
+  background: var(--cream);
+  color: var(--ink);
+  font-family: var(--font-pixel);
+  font-size: 10px;
+  line-height: 1.8;
+  box-shadow: 0 0 0 4px var(--ink), 0 0 0 8px var(--baby), 0 0 0 12px var(--ink);
+}
+.dialog::backdrop { background: rgba(185, 198, 255, 0.7); }
+.dialog h2 { font-size: 14px; margin-bottom: 14px; color: var(--rose); }
+.dialog .btn { margin-top: 14px; }
+
+.card { text-align: center; box-shadow: 0 0 0 4px var(--ink), 0 0 0 8px var(--bubblegum), 0 0 0 12px var(--ink); }
+.card-deco { color: var(--salmon); }
+.card-from { margin-top: 12px; color: var(--mauve); }
+
+.goal-list { list-style: none; display: grid; gap: 8px; }
+.goal-list li { opacity: 0.55; }
+.goal-list li.done { opacity: 1; color: #3f8f6a; }
+
+.row { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+
+.goal-intro { margin-bottom: 12px; color: var(--mauve); }
+.goal-intro b { color: var(--rose); }
+
+/* little pixel present drawn with box-shadow (one 3px "pixel" per shadow) */
+.reward-row {
+  display: flex; align-items: center; gap: 14px;
+  margin-top: 14px; padding: 10px 12px;
+  background: var(--ice);
+  box-shadow: 0 0 0 3px var(--ink);
+}
+.reward-row.unlocked { background: var(--bubblegum); }
+.reward-gift {
+  flex: none; width: 3px; height: 3px; margin: 0 12px 12px 0;
+  box-shadow:
+    6px 0 var(--rose), 15px 0 var(--rose),
+    0 3px var(--ink), 3px 3px var(--ink), 6px 3px var(--ink), 9px 3px var(--rose), 12px 3px var(--ink), 15px 3px var(--ink), 18px 3px var(--ink),
+    0 6px var(--ink), 3px 6px var(--butter), 6px 6px var(--butter), 9px 6px var(--rose), 12px 6px var(--butter), 15px 6px var(--butter), 18px 6px var(--ink),
+    0 9px var(--ink), 3px 9px var(--peach), 6px 9px var(--butter), 9px 9px var(--rose), 12px 9px var(--butter), 15px 9px var(--peach), 18px 9px var(--ink),
+    0 12px var(--ink), 3px 12px var(--ink), 6px 12px var(--ink), 9px 12px var(--ink), 12px 12px var(--ink), 15px 12px var(--ink), 18px 12px var(--ink);
+}
+
+.btn-relock { background: var(--lilac); }
+.btn-relock:hover { background: var(--lavender); }
+body.relocking .scene { opacity: 0; transition: opacity 400ms steps(4); }
+.btn.nudge { animation: nudge 0.6s steps(3) infinite; background: var(--butter); }
+@keyframes nudge { 33% { transform: rotate(-3deg); } 66% { transform: rotate(3deg); } }
+.btn-reward[aria-disabled="true"] { background: var(--lavender); color: var(--mauve); }
+.btn-reward.is-unlocked { background: var(--bubblegum); animation: glow 1.2s steps(2) infinite; }
+@keyframes glow { 50% { background: var(--butter); } }
+
+/* ------------------------------------------------- reward photo frame */
+.collage-dialog {
+  margin: auto;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  max-width: min(94vw, 980px);
+  max-height: 94dvh;
+  overflow: visible;
+}
+.collage-dialog::backdrop {
+  background:
+    repeating-linear-gradient(45deg, rgba(255, 196, 221, 0.85) 0 12px, rgba(255, 250, 242, 0.85) 12px 24px);
+}
+.collage-dialog[open] { animation: frame-in 450ms steps(5); }
+@keyframes frame-in { from { transform: scale(0.6) translateY(40px); opacity: 0; } }
+
+/* the frame: plum outline, butter "wood" moulding with a bevel, inner plum
+   line, cream mat. Hard edges only — every line is a multiple of 4px. */
+.photo-frame {
+  position: relative;
+  padding: 28px;
+  background: var(--butter);
+  box-shadow:
+    0 0 0 4px var(--ink),
+    inset 4px 4px 0 0 #fff6cf,
+    inset -4px -4px 0 0 var(--peach),
+    inset 0 0 0 12px var(--butter),
+    inset 0 0 0 16px var(--salmon),
+    12px 12px 0 4px rgba(75, 59, 87, 0.3);
+  margin: 12px;
+}
+.frame-mat {
+  background: var(--cream);
+  box-shadow: 0 0 0 4px var(--ink), inset 0 0 0 8px var(--bubblegum);
+  padding: 22px 22px 16px;
+  max-height: calc(94dvh - 150px);
+  overflow-y: auto;
+  scrollbar-color: var(--rose) var(--cream);
+}
+.collage-title {
+  text-align: center;
+  font-size: clamp(12px, 2.4vw, 20px);
+  line-height: 1.5;
+  color: var(--butter);
+  text-shadow:
+    -2px 0 0 var(--ink), 2px 0 0 var(--ink), 0 -2px 0 var(--ink), 0 2px 0 var(--ink),
+    4px 4px 0 var(--rose);
+  margin: 4px 0 18px;
+}
+.collage-note {
+  text-align: center;
+  font-size: 9px;
+  color: var(--mauve);
+  margin-top: 16px;
+}
+.frame-plaque {
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin-top: 18px;
+}
+.frame-plaque .btn { margin: 0; }
+
+/* pixel heart in each corner of the moulding (box-shadow pixel art, 4px px) */
+.frame-heart {
+  position: absolute;
+  width: 4px; height: 4px;
+  box-shadow:
+    4px 0 var(--ink), 8px 0 var(--ink), 16px 0 var(--ink), 20px 0 var(--ink),
+    0 4px var(--ink), 4px 4px var(--rose), 8px 4px var(--rose), 12px 4px var(--ink), 16px 4px var(--rose), 20px 4px #fff, 24px 4px var(--ink),
+    0 8px var(--ink), 4px 8px var(--rose), 8px 8px var(--rose), 12px 8px var(--rose), 16px 8px var(--rose), 20px 8px var(--rose), 24px 8px var(--ink),
+    4px 12px var(--ink), 8px 12px var(--rose), 12px 12px var(--rose), 16px 12px var(--rose), 20px 12px var(--ink),
+    8px 16px var(--ink), 12px 16px var(--rose), 16px 16px var(--ink),
+    12px 20px var(--ink);
+}
+.frame-heart.tl { left: -14px; top: -14px; }
+.frame-heart.tr { right: 2px; top: -14px; }
+.frame-heart.bl { left: -14px; bottom: 6px; }
+.frame-heart.br { right: 2px; bottom: 6px; }
+
+/* reward letter: cream paper, ruled lines, paragraphs pop in one by one */
+.collage-dialog { max-width: min(94vw, 640px); }
+.reward-letter {
+  max-width: 52ch;
+  margin: 0 auto;
+  padding: 16px 18px;
+  background:
+    repeating-linear-gradient(to bottom, transparent 0 27px, rgba(255, 143, 177, 0.35) 27px 28px),
+    #fff;
+  box-shadow: 0 0 0 3px var(--ink), 6px 6px 0 3px rgba(75, 59, 87, 0.2);
+  font-size: clamp(9px, 1.6vw, 11px);
+  line-height: 28px;
+  color: var(--ink);
+}
+.reward-letter p {
+  margin: 0 0 14px;
+  animation: pop-in 400ms steps(4) var(--delay) both;
+}
+.reward-letter p:first-child { color: var(--rose); }
+.reward-letter .letter-sign { text-align: right; color: var(--mauve); margin: 0; }
+@keyframes pop-in { from { transform: translateY(8px); opacity: 0; } }
+
+@media (max-width: 560px) {
+  .photo-frame { padding: 18px; margin: 8px; }
+  .frame-mat { padding: 14px 12px; }
+  .reward-letter { padding: 12px; line-height: 24px;
+    background: repeating-linear-gradient(to bottom, transparent 0 23px, rgba(255, 143, 177, 0.35) 23px 24px), #fff; }
+}
+
+/* ------------------------------------------------------------- touch/mobile */
+/* no 300ms double-tap-zoom delay, no grey tap flash, no long-press menus on
+   the pixel canvases */
+button, .btn, a, canvas { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+#stage, #lock-canvas { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+.scene, .lock {
+  padding-left: max(8px, env(safe-area-inset-left));
+  padding-right: max(8px, env(safe-area-inset-right));
+  padding-bottom: max(10px, env(safe-area-inset-bottom));
+}
+.dialog { max-height: calc(100dvh - 40px); overflow-y: auto; width: min(calc(100vw - 40px), 460px); }
+.keybox-input { font-size: 16px; } /* >=16px stops iOS zooming in on focus */
+
+/* phones (portrait) */
+@media (max-width: 560px) {
+  .scene { gap: 10px; padding-top: max(12px, env(safe-area-inset-top)); }
+  .greeting { font-size: clamp(16px, 6.4vw, 26px); }
+  .subtitle { margin-top: 4px; font-size: 8px; }
+  #stage {
+    margin: 9px;
+    box-shadow: 0 0 0 3px var(--ink), 0 0 0 6px var(--cream), 0 0 0 9px var(--ink), 6px 6px 0 9px rgba(75, 59, 87, 0.25);
+  }
+  /* toolbar becomes a tidy 3-column grid of equal buttons */
+  .toolbar {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 9px 8px;
+    width: 100%;
+    padding: 0 4px;
+  }
+  .toolbar .btn { font-size: 8px; padding: 9px 4px; min-height: 36px; }
+  /* a lone button on the last row stretches across instead of hanging left */
+  .toolbar .btn:last-child:nth-child(3n+1) { grid-column: 1 / -1; }
+  .toolbar .btn:nth-last-child(2):nth-child(3n+1) { grid-column: span 1; }
+  .hint { font-size: 7px; min-height: 0; }
+  .lock { gap: 6px; }
+  #lock-canvas { margin: 9px; }
+  #lock-canvas { box-shadow: 0 0 0 3px var(--ink), 0 0 0 6px var(--cream), 0 0 0 9px var(--ink); }
+  /* key box sits near the top so the on-screen keyboard can't cover it */
+  .keybox { align-items: start; padding-top: max(10vh, env(safe-area-inset-top)); }
+  .keybox-card { width: calc(100vw - 48px); padding: 18px; }
+  .dialog { padding: 18px; font-size: 9px; }
+}
+
+/* phones held sideways: short screens, so trim everything around the canvas */
+@media (max-height: 500px) and (orientation: landscape) {
+  .scene { gap: 6px; padding-top: 6px; padding-bottom: 6px; }
+  .greeting { font-size: 16px; line-height: 1.2; }
+  .subtitle, .hint { display: none; }
+  #stage { margin: 9px; box-shadow: 0 0 0 3px var(--ink), 0 0 0 6px var(--cream), 0 0 0 9px var(--ink); }
+  .toolbar { gap: 6px; }
+  .toolbar .btn { font-size: 7px; padding: 6px 7px; }
+  .lock { gap: 2px; }
+  #lock-canvas { margin: 9px; }
+  .lock-title { font-size: 14px; }
+  .lock-msg { padding: 6px 10px; font-size: 8px; }
+  #lock-canvas:focus-visible, #stage:focus-visible { outline-offset: 2px; }
+  .lock-count { display: none; }
+  .keybox { align-items: start; padding-top: 8px; }
+}
+
+/* reduced motion: JS stops ambient motion; this kills CSS motion too */
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}
