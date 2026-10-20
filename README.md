@@ -9,7 +9,8 @@ JS, no build step.
 - Name defaults to **Shim** (no `?name=` needed; it still overrides).
 - Password hint: *"What we love to do but banned by the Geneva
   Conventions"*. Stored as an FNV-1a hash (`ANSWER_HASH` in `js/lock.js`);
-  input is upper-cased, exact match.
+  forgiving match: case, spaces, dashes and
+  singular/plural don't matter (WAR CRIMES, war-crime, warcrimes!).
 - Finishing all 7 party goals unlocks a **birthday letter** in the pixel
   frame instead of a photo collage. Edit `LETTER` / `LETTER_SIGN` in
   `js/ui.js`.

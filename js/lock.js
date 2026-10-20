@@ -22,12 +22,20 @@ window.HB = window.HB || {};
 
   // Early-bypass key box. The answer is stored as an FNV-1a hash so it isn't
   // sitting in plain text in view-source (still not real security).
-  const ANSWER_HASH = 0x5e53f452;
+  const ANSWER_HASH = 0x45b2b5f5; // hash of the 8-letter core word
   const HINT = "WHAT WE LOVE TO DO BUT BANNED BY THE GENEVA CONVENTIONS";
   const fnv1a = (str) => {
     let h = 0x811c9dc5;
     for (const b of new TextEncoder().encode(str)) h = Math.imul(h ^ b, 0x01000193) >>> 0;
     return h;
+  };
+  // Forgiving match: keep letters only (so spaces, dashes, "!" etc. don't
+  // matter), then accept if any 8-letter window hashes to the answer. That
+  // covers singular/plural and extra words around it.
+  const matches = (raw) => {
+    const s = raw.toUpperCase().replace(/[^A-Z]/g, "");
+    for (let i = 0; i + 8 <= s.length; i++) if (fnv1a(s.slice(i, i + 8)) === ANSWER_HASH) return true;
+    return false;
   };
   const root = document.getElementById("lock");
   // The lock ALWAYS shows; only the key box opens it. The date just changes
@@ -425,7 +433,7 @@ window.HB = window.HB || {};
   kbForm.addEventListener("submit", (e) => {
     e.preventDefault();
     const guess = kbInput.value.trim().toUpperCase(); // exact match (hashed, see ANSWER_HASH)
-    if (fnv1a(guess) === ANSWER_HASH) {
+    if (matches(guess)) {
       bypassed = true;
       // iPhones only allow audio started from inside a tap/keypress; the song
       // starts ~5 s later, so unlock the audio NOW while we're in the gesture
