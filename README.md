@@ -14,7 +14,7 @@ JS, no build step.
   frame instead of a photo collage. Edit `LETTER` / `LETTER_SIGN` in
   `js/ui.js`.
 - No images (no collage, no Save-as-GIF card).
-- `UNLOCK_AT` is Oct 19 2026, so the lock is in "IT'S THE BIG DAY!" mode.
+- `UNLOCK_AT` is Oct 16 2026, so the lock is in "IT'S THE BIG DAY!" mode.
 
 Client-side surprise, not real security.
 

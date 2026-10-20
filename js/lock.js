@@ -17,8 +17,8 @@ window.HB = window.HB || {};
 (function (HB) {
   "use strict";
 
-  const UNLOCK_AT = new Date(2026, 9, 19, 0, 0, 0); // Oct 19 2026, 00:00 local (month is 0-based)
-  const DATE_LABEL = "MONDAY, OCTOBER 19, 2026";
+  const UNLOCK_AT = new Date(2026, 9, 16, 0, 0, 0); // Oct 16 2026, 00:00 local (month is 0-based)
+  const DATE_LABEL = "FRIDAY, OCTOBER 16, 2026";
 
   // Early-bypass key box. The answer is stored as an FNV-1a hash so it isn't
   // sitting in plain text in view-source (still not real security).
